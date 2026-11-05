@@ -1,12 +1,19 @@
 import { useRef, useState } from "react";
 import WorkshopCard from "./components/WorkshopCard";
+import QuestionDialog from "./components/QuestionDialog";
 import { workshops, type Workshop } from "./workshops";
+import { requestOptions, type RequestValues } from "./requests";
 
 export default function App() {
   const [query, setQuery] = useState("");
   const [notice, setNotice] = useState("");
   const [bookingCount, setBookingCount] = useState(0);
   const noticeRef = useRef<HTMLParagraphElement>(null);
+
+  const [questionWorkshop, setQuestionWorkshop] = useState<Workshop | null>(null);
+  const [confirmation, setConfirmation] = useState<{ workshopTitle: string; choiceLabel: string } | null>(null);
+  const confirmationRef = useRef<HTMLParagraphElement>(null);
+
   const normalized = query.trim().toLocaleLowerCase("fr");
   const visible = workshops.filter(workshop =>
     `${workshop.title} ${workshop.location} ${workshop.category}`.toLocaleLowerCase("fr").includes(normalized),
@@ -18,6 +25,14 @@ export default function App() {
     setBookingCount(next);
     setNotice(`Préinscription de démonstration n° ${next} enregistrée pour ${workshop.title}. Aucun paiement ni réservation réelle.`);
     setTimeout(() => noticeRef.current?.focus(), 0);
+  };
+
+  const handleQuestionSubmit = (values: RequestValues) => {
+    const choiceLabel = requestOptions.question.find(o => o.value === values.choice)?.label ?? values.choice;
+    const workshopTitle = questionWorkshop?.title ?? "";
+    setQuestionWorkshop(null);
+    setConfirmation({ workshopTitle, choiceLabel });
+    setTimeout(() => confirmationRef.current?.focus(), 0);
   };
 
   return (
@@ -44,7 +59,25 @@ export default function App() {
           </div>
           {visible.length > 0 ? (
             <div className="workshop-grid">
-              {visible.map(workshop => <WorkshopCard key={workshop.id} workshop={workshop} onReserve={reserve} />)}
+              {visible.map(workshop => (
+                <WorkshopCard
+                  key={workshop.id}
+                  workshop={workshop}
+                  onReserve={reserve}
+                  extraAction={
+                    <button
+                      type="button"
+                      className="contact-button"
+                      onClick={() => {
+                        setConfirmation(null);
+                        setQuestionWorkshop(workshop);
+                      }}
+                    >
+                      Poser une question à l'organisateur
+                    </button>
+                  }
+                />
+              ))}
             </div>
           ) : <p className="empty-state">Aucun atelier ne correspond. Essayez un autre titre, une autre ville ou une autre catégorie.</p>}
         </section>
@@ -53,10 +86,35 @@ export default function App() {
           <div className="how-grid"><div><span>01</span><h3>Choisissez votre atelier</h3><p>Retrouvez le lieu, la durée et le tarif dans le programme.</p></div><div><span>02</span><h3>Préparez votre venue</h3><p>Consultez les détails pour savoir ce qui est fourni et ce qu’il faut apporter.</p></div><div><span>03</span><h3>Prenez le temps de créer</h3><p>Les ateliers présentés ici sont fictifs. Toutes les actions sont des démonstrations locales.</p></div></div>
         </section>
         <div className="registration-result">
-          <p ref={noticeRef} tabIndex={-1} role="status" className={notice ? "notice" : "notice-empty"}>{notice}</p>
+          <p
+            ref={noticeRef}
+            tabIndex={-1}
+            role="status"
+            className={notice ? "notice" : "notice-empty"}
+          >
+            {notice}
+          </p>
+          {confirmation && (
+            <p
+              ref={confirmationRef}
+              tabIndex={-1}
+              role="status"
+              className="notice"
+            >
+              Votre question au sujet de « {confirmation.choiceLabel} » pour l'atelier <strong>{confirmation.workshopTitle}</strong> a bien été transmise.
+            </p>
+          )}
         </div>
       </main>
       <footer><a className="brand" href="#accueil">Atelier<span>Local</span></a><p>Application pédagogique · Aucun envoi ni paiement réel.</p></footer>
+
+      {questionWorkshop && (
+        <QuestionDialog
+          workshop={questionWorkshop}
+          onClose={() => setQuestionWorkshop(null)}
+          onSubmit={handleQuestionSubmit}
+        />
+      )}
     </>
   );
 }

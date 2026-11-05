@@ -183,8 +183,36 @@ Supprimer la règle `.reserve-button:focus-visible { outline: none; box-shadow: 
 
 ## Composant créé
 
-Expliquez vos principaux choix d’accessibilité et les manipulations réalisées pour les vérifier.
+Le composant `QuestionDialog` est une fenêtre modale utilisant l'élément HTML natif `<dialog>`.
+
+**Gestion du focus**
+- À l'ouverture, `showModal()` est appelé et le focus est placé sur le `<dialog>` lui-même (`tabIndex={-1}`), ce qui permet aux lecteurs d'écran d'annoncer le titre de la fenêtre.
+- En cas d'erreur, le focus est déplacé vers le résumé d'erreurs, afin que l'utilisateur soit immédiatement informé du problème sans avoir à parcourir le formulaire.
+- Après un envoi valide, la modale se ferme et le focus est déplacé vers le message de confirmation dans la page principale.
+
+**Formulaire**
+- Un `<select>` natif est utilisé pour le choix du sujet. La première option invite à sélectionner un sujet sans présélectionner de valeur valide, conformément à la consigne.
+- Les trois champs portent un `<label>` explicitement associé via `htmlFor`/`id`.
+- Les champs obligatoires portent `aria-required="true"`.
+- En cas d'erreur, chaque champ affiche un message inline identifié par `id`, référencé depuis le champ via `aria-describedby`. Le résumé d'erreurs global porte `role="alert"` pour être annoncé automatiquement.
+
+**Confirmation**
+- Après un envoi valide, la confirmation affiche le titre de l'atelier et le libellé du sujet choisi. Elle est rendue avec `role="status"` dans App et le focus y est déplacé.
+
+**Vérifications réalisées**
+- Navigation au clavier complète : ouverture, remplissage, envoi incomplet (conservation des valeurs, affichage de l'erreur), correction et envoi valide.
+- Vérification dans le panneau Accessibilité des DevTools Firefox : chaque champ annonce correctement son libellé.
+- Tests automatisés : le scénario complet est couvert par le mini-test.
 
 ## Mini-test
 
-Indiquez le fichier, le résultat et ce que le test permet de vérifier.
+Fichier : `src/__tests__/Composant.test.tsx`
+
+Résultat : **4/4 tests passent** (`npm test -- --run`).
+
+Le test couvre le scénario suivant depuis `<App />` :
+1. Ouverture de la modale « Poser une question » pour l'atelier « Une tasse en céramique ».
+2. Sélection du sujet « Le matériel à apporter » et saisie d'une question.
+3. Tentative d'envoi sans email : vérification que la modale reste ouverte, qu'une erreur est signalée (`role="alert"`), et qu'aucune confirmation n'apparaît.
+4. Vérification que le sujet et la question sont conservés après l'échec.
+5. Saisie d'un email valide et envoi : vérification que la modale se ferme et que la confirmation dans la page mentionne bien « Une tasse en céramique » et « Le matériel à apporter ».

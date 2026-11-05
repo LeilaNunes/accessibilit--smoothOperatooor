@@ -20,7 +20,7 @@ npm run build
 
 ## Rendu
 
-- Membres du binôme : à compléter dans ce README.
+- Membres du binôme : Leïla Nunes De Barros, Jérémie Levan.
 - Copier MODELE-AUDIT.md en AUDIT.md puis le compléter.
 - Créer et intégrer le composant « Poser une question à l’organisateur ».
 - Aucun envoi réel. Utiliser uniquement des coordonnées fictives.
